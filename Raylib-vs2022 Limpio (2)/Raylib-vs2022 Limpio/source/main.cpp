@@ -1,4 +1,3 @@
-// mavis_input_msvc_fixed.cpp
 #include "raylib.h"
 #include <math.h>
 #include <stdio.h>
