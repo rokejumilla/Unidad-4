@@ -1,15 +1,15 @@
 #include "Player.h"
 
-// Constructor
 Player::Player() {
-    rect.width = 30.0f;
-    rect.height = 40.0f;
-    rect.x = 20.0f;
-    rect.y = 600 - 81.0f - rect.height; // valor por defecto; Game ajusta si hace falta
+    rect.width = kPlayerWidth;
+    rect.height = kPlayerHeight;
+    rect.x = kPlayerStartX;
+    // posicion inicial Y calculada con constantes (similar al comportamiento anterior)
+    rect.y = (float)kScreenHeight - kPlayerStartYOffset - rect.height;
     velocity = { 0.0f, 0.0f };
     onGround = false;
-    speed = 200.0f;
-    jumpForce = -420.0f;
+    speed = kPlayerSpeed;
+    jumpForce = kPlayerJumpForce;
 
     tex.id = 0;
     altTex.id = 0;
@@ -21,27 +21,26 @@ float Player::prevBottom() const {
     return rect.y + rect.height;
 }
 
-void Player::LoadTexture(const std::string& path) {
+void Player::loadTexture(const std::string& path) {
     tex = ::LoadTexture(path.c_str());
 }
 
-void Player::LoadAltTexture(const std::string& path) {
+void Player::loadAltTexture(const std::string& path) {
     altTex = ::LoadTexture(path.c_str());
 }
 
-void Player::UnloadTextures() {
+void Player::unloadTextures() {
     if (tex.id != 0) ::UnloadTexture(tex);
     if (altTex.id != 0) ::UnloadTexture(altTex);
 }
 
-void Player::Update(float dt, float gravity) {
-    // movimiento horizontal ya debe venir puesto externamente en velocity.x
+void Player::update(float dt, float gravity) {
     velocity.y += gravity * dt;
     rect.x += velocity.x * dt;
     rect.y += velocity.y * dt;
 }
 
-void Player::Draw() const {
+void Player::draw() const {
     Texture2D drawTex = tex;
     if (altTexture && altTex.id != 0) drawTex = altTex;
 
@@ -52,21 +51,20 @@ void Player::Draw() const {
         DrawTexturePro(drawTex, src, dest, origin, 0.0f, tint);
     }
     else {
-        // si no hay textura, dibujar rectángulo con tint (fallback)
         DrawRectangleRec(rect, tint);
         DrawRectangleLinesEx(rect, 1.0f, BLACK);
     }
 }
 
-void Player::ToggleTint() {
+void Player::toggleTint() {
     if (tint.r == 255 && tint.g == 255 && tint.b == 255) {
-        tint = { 255, 50, 50, 255 }; // rojo
+        tint = { 255, 50, 50, 255 };
     }
     else {
         tint = WHITE;
     }
 }
 
-void Player::ToggleAltTexture() {
+void Player::toggleAltTexture() {
     altTexture = !altTexture;
 }

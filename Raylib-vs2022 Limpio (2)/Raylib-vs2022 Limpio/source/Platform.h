@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include <string>
+#include "Config.h"
 
 class Platform {
 public:
@@ -11,14 +12,13 @@ public:
 
     Platform(float x = 0, float y = 0, float w = 0, float h = 0);
 
-    void LoadTexture(const std::string& path);
-    void UnloadTexture();
+    void loadTexture(const std::string& path);
+    void unloadTexture();
 
-    void Draw() const;
+    void draw() const;
 
-    // Resolución de colisiones
-    void ResolveHorizontalCollision(Rectangle& playerRect, float prevPlayerX) const;
-    bool ResolveVerticalCollision(Rectangle& playerRect, Vector2& playerVel, float prevBottom, bool& outOnGround) const;
+    void resolveHorizontalCollision(Rectangle& playerRect, float prevPlayerX) const;
+    bool resolveVerticalCollision(Rectangle& playerRect, Vector2& playerVel, float prevBottom, bool& outOnGround) const;
 };
 
 #endif // PLATFORM_H

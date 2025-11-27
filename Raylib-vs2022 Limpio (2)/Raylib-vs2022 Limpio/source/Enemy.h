@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "Platform.h"
 #include <string>
+#include "Config.h"
 
 class Enemy {
 public:
@@ -16,11 +17,11 @@ public:
 
     Enemy();
 
-    void InitOnPlatform(const Platform& plat, float extraSpeed = 0.0f);
-    void LoadTexture(const std::string& path);
-    void UnloadTexture();
-    void Update(float dt);
-    void Draw() const;
+    void initOnPlatform(const Platform& plat, float extraSpeed = 0.0f);
+    void loadTexture(const std::string& path);
+    void unloadTexture();
+    void update(float dt);
+    void draw() const;
 };
 
 #endif // ENEMY_H

@@ -6,13 +6,14 @@
 #include "Enemy.h"
 #include <vector>
 #include <string>
+#include "Config.h"
 
 class Game {
 public:
     Game();
     ~Game();
 
-    void Run();
+    void run();
 
 private:
     const int screenW;
@@ -30,26 +31,22 @@ private:
     std::vector<Enemy> enemies;
     Rectangle goal;
 
-    // Textura del goal
     Texture2D goalTex;
 
     float loseTimer;
-
-    // cronómetro
     float elapsedTime;
 
-    // rutas a texturas (raw string literal)
     std::string playerPath;
     std::string groundPath;
     std::string enemyPath;
     std::string playerAltPath;
-    std::string goalPath; // <-- ruta para tesoro.png
+    std::string goalPath;
 
-    void InitWindowAndTextures();
-    void UnloadTexturesAndClose();
-    void Reset();
-    void Update(float dt);
-    void Draw() const;
+    void initWindowAndTextures();
+    void unloadTexturesAndClose();
+    void reset();
+    void update(float dt);
+    void draw() const;
 };
 
 #endif // GAME_H

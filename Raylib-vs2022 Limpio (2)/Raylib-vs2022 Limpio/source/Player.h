@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include <string>
+#include "Config.h"
 
 class Player {
 public:
@@ -12,28 +13,24 @@ public:
     float speed;
     float jumpForce;
 
-    // Texturas y apariencia
     Texture2D tex;
     Texture2D altTex;
-    bool altTexture;   // si true usamos altTex en vez de tex (si altTex.id != 0)
-    Color tint;        // tint aplicado al dibujar
+    bool altTexture;
+    Color tint;
 
     Player();
 
     float prevBottom() const;
 
-    // carga/descarga texturas
-    void LoadTexture(const std::string& path);
-    void LoadAltTexture(const std::string& path);
-    void UnloadTextures();
+    void loadTexture(const std::string& path);
+    void loadAltTexture(const std::string& path);
+    void unloadTextures();
 
-    // update / draw
-    void Update(float dt, float gravity);
-    void Draw() const;
+    void update(float dt, float gravity);
+    void draw() const;
 
-    // utilidades
-    void ToggleTint();        // alterna tint entre WHITE y rojo
-    void ToggleAltTexture();  // alterna el flag altTexture
+    void toggleTint();
+    void toggleAltTexture();
 };
 
 #endif // PLAYER_H
