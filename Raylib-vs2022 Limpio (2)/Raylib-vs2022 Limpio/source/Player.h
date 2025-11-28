@@ -22,13 +22,16 @@ public:
 
     float prevBottom() const;
 
+    // carga/descarga texturas
     void loadTexture(const std::string& path);
     void loadAltTexture(const std::string& path);
     void unloadTextures();
 
+    // update / draw
     void update(float dt, float gravity);
     void draw() const;
 
+    // utilidades
     void toggleTint();
     void toggleAltTexture();
 };

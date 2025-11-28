@@ -14,7 +14,7 @@ constexpr float kGroundHeight = 60.0f;
 constexpr float kPlayerWidth = 30.0f;
 constexpr float kPlayerHeight = 40.0f;
 constexpr float kPlayerStartX = 20.0f;
-constexpr float kPlayerStartYOffset = kGroundHeight + 21.0f; // mantenemos el offset visual anterior
+constexpr float kPlayerStartYOffset = kGroundHeight + 21.0f;
 constexpr float kPlayerSpeed = 200.0f;
 constexpr float kPlayerJumpForce = -420.0f;
 

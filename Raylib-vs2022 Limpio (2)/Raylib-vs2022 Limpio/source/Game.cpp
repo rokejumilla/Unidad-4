@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "raylib.h"
+#include "ResourceUtils.h"
 #include <iostream>
 
 // Rutas (ajusta si es necesario)
@@ -20,7 +21,7 @@ Game::Game()
     menuOptionBoxes[0] = { (float)(screenW / 2 - kMenuBoxWidth / 2), (float)(screenH / 2 - kMenuBoxHeight / 2), (float)kMenuBoxWidth, (float)kMenuBoxHeight };
     menuOptionBoxes[1] = { (float)(screenW / 2 - kMenuBoxWidth / 2), (float)(screenH / 2 + kMenuBoxHeight), (float)kMenuBoxWidth, (float)kMenuBoxHeight };
 
-    platforms.emplace_back(0.0f, (float)(screenH - kGroundHeight), 800.0f, kGroundHeight);
+    platforms.emplace_back(0.0f, (float)(screenH - kGroundHeight), (float)kScreenWidth, kGroundHeight);
     platforms.emplace_back(100.0f, 460.0f, 110.0f, 15.0f);
     platforms.emplace_back(230.0f, 390.0f, 110.0f, 15.0f);
     platforms.emplace_back(360.0f, 320.0f, 110.0f, 15.0f);
@@ -51,13 +52,15 @@ void Game::initWindowAndTextures() {
 
     player.rect.y = (float)screenH - kPlayerStartYOffset - player.rect.height;
 
+    // Cargamos texturas con verificación
     player.loadTexture(playerPath);
     player.loadAltTexture(playerAltPath);
 
     for (auto& p : platforms) p.loadTexture(groundPath);
     for (auto& e : enemies) e.loadTexture(enemyPath);
 
-    goalTex = ::LoadTexture(goalPath.c_str());
+    // goal
+    loadTextureChecked(goalPath, goalTex, "goal");
 }
 
 void Game::unloadTexturesAndClose() {
@@ -76,6 +79,7 @@ void Game::reset() {
     player.tint = WHITE;
     player.altTexture = false;
 
+    // Re-init enemigos (con nuevas propiedades aleatorias)
     enemies.clear();
     for (size_t i = 1; i < platforms.size(); ++i) {
         Enemy e;

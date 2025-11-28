@@ -1,4 +1,5 @@
 #include "Platform.h"
+#include "ResourceUtils.h"
 
 Platform::Platform(float x, float y, float w, float h) {
     rect = { x, y, w, h };
@@ -6,7 +7,7 @@ Platform::Platform(float x, float y, float w, float h) {
 }
 
 void Platform::loadTexture(const std::string& path) {
-    tex = ::LoadTexture(path.c_str());
+    loadTextureChecked(path, tex, "platform");
 }
 
 void Platform::unloadTexture() {

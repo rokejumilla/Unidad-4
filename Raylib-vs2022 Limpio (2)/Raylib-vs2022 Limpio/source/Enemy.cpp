@@ -1,4 +1,5 @@
 #include "Enemy.h"
+#include "ResourceUtils.h"
 
 Enemy::Enemy() {
     rect = { 0, 0, kEnemyWidth, kEnemyHeight };
@@ -29,7 +30,7 @@ void Enemy::initOnPlatform(const Platform& plat, float extraSpeed) {
 }
 
 void Enemy::loadTexture(const std::string& path) {
-    tex = ::LoadTexture(path.c_str());
+    loadTextureChecked(path, tex, "enemy");
 }
 
 void Enemy::unloadTexture() {

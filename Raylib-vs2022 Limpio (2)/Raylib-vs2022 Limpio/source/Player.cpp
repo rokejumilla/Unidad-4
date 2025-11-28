@@ -1,10 +1,10 @@
 #include "Player.h"
+#include "ResourceUtils.h"
 
 Player::Player() {
     rect.width = kPlayerWidth;
     rect.height = kPlayerHeight;
     rect.x = kPlayerStartX;
-    // posicion inicial Y calculada con constantes (similar al comportamiento anterior)
     rect.y = (float)kScreenHeight - kPlayerStartYOffset - rect.height;
     velocity = { 0.0f, 0.0f };
     onGround = false;
@@ -22,11 +22,11 @@ float Player::prevBottom() const {
 }
 
 void Player::loadTexture(const std::string& path) {
-    tex = ::LoadTexture(path.c_str());
+    loadTextureChecked(path, tex, "player");
 }
 
 void Player::loadAltTexture(const std::string& path) {
-    altTex = ::LoadTexture(path.c_str());
+    loadTextureChecked(path, altTex, "player_alt");
 }
 
 void Player::unloadTextures() {
