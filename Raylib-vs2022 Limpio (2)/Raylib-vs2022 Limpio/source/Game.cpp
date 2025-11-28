@@ -21,6 +21,7 @@ Game::Game()
     menuOptionBoxes[0] = { (float)(screenW / 2 - kMenuBoxWidth / 2), (float)(screenH / 2 - kMenuBoxHeight / 2), (float)kMenuBoxWidth, (float)kMenuBoxHeight };
     menuOptionBoxes[1] = { (float)(screenW / 2 - kMenuBoxWidth / 2), (float)(screenH / 2 + kMenuBoxHeight), (float)kMenuBoxWidth, (float)kMenuBoxHeight };
 
+    // plataformas (usa constantes para el suelo)
     platforms.emplace_back(0.0f, (float)(screenH - kGroundHeight), (float)kScreenWidth, kGroundHeight);
     platforms.emplace_back(100.0f, 460.0f, 110.0f, 15.0f);
     platforms.emplace_back(230.0f, 390.0f, 110.0f, 15.0f);
@@ -31,6 +32,7 @@ Game::Game()
     goal = { kGoalX, kGoalY, kGoalWidth, kGoalHeight };
     goalTex.id = 0;
 
+    // enemigos: se initian con initOnPlatform (aleatorio)
     for (size_t i = 1; i < platforms.size(); ++i) {
         Enemy e;
         e.rect.width = kEnemyWidth;
@@ -39,6 +41,7 @@ Game::Game()
         enemies.push_back(e);
     }
 
+    // ajustar player Y inicial
     player.rect.y = (float)screenH - kPlayerStartYOffset - player.rect.height;
 }
 
@@ -47,19 +50,18 @@ Game::~Game() {
 }
 
 void Game::initWindowAndTextures() {
-    InitWindow(screenW, screenH, "Juego - Configurable");
+    InitWindow(screenW, screenH, "Juego - Configurable (refactor)");
     SetTargetFPS(60);
 
     player.rect.y = (float)screenH - kPlayerStartYOffset - player.rect.height;
 
-    // Cargamos texturas con verificación
+    // Carga de texturas con comprobación/logging
     player.loadTexture(playerPath);
     player.loadAltTexture(playerAltPath);
 
     for (auto& p : platforms) p.loadTexture(groundPath);
     for (auto& e : enemies) e.loadTexture(enemyPath);
 
-    // goal
     loadTextureChecked(goalPath, goalTex, "goal");
 }
 
@@ -94,85 +96,69 @@ void Game::reset() {
     elapsedTime = 0.0f;
 }
 
-void Game::update(float dt) {
+// ---------------------- separación de responsabilidades ----------------------
+
+void Game::handleMenuInput() {
+    // navegación y selección con mouse/teclado
+    if (IsKeyPressed(KEY_DOWN)) menuSelection = (menuSelection + 1) % 2;
+    if (IsKeyPressed(KEY_UP)) menuSelection = (menuSelection + 2 - 1) % 2;
+    Vector2 mousePoint = GetMousePosition();
+    for (int i = 0; i < 2; ++i) if (CheckCollisionPointRec(mousePoint, menuOptionBoxes[i])) menuSelection = i;
+
+    if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (menuSelection == 0) {
+            reset();
+            state = PLAYING;
+        }
+        else {
+            state = EXITING;
+        }
+    }
+}
+
+void Game::input(float dt) {
+    // Este método maneja entrada según el estado actual
+    if (state == MENU) {
+        handleMenuInput();
+        return;
+    }
+
     if (state == PLAYING) {
+        // Movimiento horizontal
         float vx = 0;
         if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) vx += 1.0f;
         if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) vx -= 1.0f;
         player.velocity.x = vx * player.speed;
 
+        // Reiniciar nivel
         if (IsKeyPressed(KEY_R)) {
             reset();
             state = PLAYING;
             return;
         }
 
+        // Alternar apariencia
         if (IsKeyPressed(KEY_T)) {
             player.toggleTint();
             if (player.altTex.id != 0) player.toggleAltTexture();
         }
 
+        // Salto
         if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP)) && player.onGround) {
             player.velocity.y = player.jumpForce;
             player.onGround = false;
         }
 
-        player.velocity.y += gravity * dt;
-
-        float prevX = player.rect.x;
-        float prevBottom = player.prevBottom();
-
-        float nextX = player.rect.x + player.velocity.x * dt;
-        float nextY = player.rect.y + player.velocity.y * dt;
-
-        player.rect.x = nextX;
-        for (auto& plat : platforms) {
-            plat.resolveHorizontalCollision(player.rect, prevX);
+        // Salir al menu
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            state = MENU;
         }
 
-        player.rect.y = nextY;
-        bool landed = false;
-        if (player.velocity.y > 0.0f) {
-            for (auto& plat : platforms) {
-                bool hit = plat.resolveVerticalCollision(player.rect, player.velocity, prevBottom, player.onGround);
-                if (hit) { landed = true; break; }
-            }
-        }
-        if (!landed) player.onGround = false;
-
-        if (player.rect.x < 0) player.rect.x = 0;
-        if (player.rect.x + player.rect.width > screenW) player.rect.x = screenW - player.rect.width;
-        if (player.rect.y + player.rect.height > screenH) {
-            player.rect.y = screenH - player.rect.height;
-            player.velocity.y = 0;
-            player.onGround = true;
-        }
-
-        for (auto& e : enemies) e.update(dt);
-
-        for (const auto& e : enemies) {
-            if (CheckCollisionRecs(player.rect, e.rect)) {
-                state = LOST;
-                loseTimer = 0.0f;
-                break;
-            }
-        }
-
-        if (CheckCollisionRecs(player.rect, goal)) {
-            state = WON;
-        }
-
-        if (IsKeyPressed(KEY_ESCAPE)) state = MENU;
-
-        elapsedTime += dt;
+        return;
     }
-    else if (state == MENU) {
-        if (IsKeyPressed(KEY_DOWN)) menuSelection = (menuSelection + 1) % 2;
-        if (IsKeyPressed(KEY_UP)) menuSelection = (menuSelection + 2 - 1) % 2;
-        Vector2 mousePoint = GetMousePosition();
-        for (int i = 0; i < 2; ++i) if (CheckCollisionPointRec(mousePoint, menuOptionBoxes[i])) menuSelection = i;
-    }
-    else if (state == WON) {
+
+    // Estados WON / LOST: permitir reinicio o volver al menu
+    if (state == WON || state == LOST) {
         if (IsKeyPressed(KEY_R)) {
             reset();
             state = PLAYING;
@@ -180,20 +166,7 @@ void Game::update(float dt) {
         }
         if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             state = MENU;
-        }
-        if (IsKeyPressed(KEY_T)) {
-            player.toggleTint();
-            if (player.altTex.id != 0) player.toggleAltTexture();
-        }
-    }
-    else if (state == LOST) {
-        if (IsKeyPressed(KEY_R)) {
-            reset();
-            state = PLAYING;
             return;
-        }
-        if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            state = MENU;
         }
         if (IsKeyPressed(KEY_T)) {
             player.toggleTint();
@@ -202,6 +175,79 @@ void Game::update(float dt) {
     }
 }
 
+void Game::physics(float dt) {
+    if (state != PLAYING) return;
+
+    // aplicar gravedad
+    player.velocity.y += gravity * dt;
+
+    // Antes de mover guardamos prevX y prevBottom
+    float prevX = player.rect.x;
+    float prevBottom = player.prevBottom();
+
+    // calcular next pos
+    float nextX = player.rect.x + player.velocity.x * dt;
+    float nextY = player.rect.y + player.velocity.y * dt;
+
+    // aplicar movimiento horizontal primero
+    player.rect.x = nextX;
+
+    // resolver colisión horizontal con plataformas (corrige X si queda incrustado)
+    for (auto& plat : platforms) {
+        plat.resolveHorizontalCollision(player.rect, prevX);
+    }
+
+    // aplicar movimiento vertical
+    player.rect.y = nextY;
+
+    // resolver colisión vertical (one-way) usando prevBottom
+    bool landed = false;
+    if (player.velocity.y > 0.0f) {
+        for (auto& plat : platforms) {
+            bool hit = plat.resolveVerticalCollision(player.rect, player.velocity, prevBottom, player.onGround);
+            if (hit) {
+                landed = true;
+                break;
+            }
+        }
+    }
+    if (!landed) player.onGround = false;
+
+    // límites de pantalla (después de resolver colisiones)
+    if (player.rect.x < 0) player.rect.x = 0;
+    if (player.rect.x + player.rect.width > screenW) player.rect.x = screenW - player.rect.width;
+    if (player.rect.y + player.rect.height > screenH) {
+        player.rect.y = screenH - player.rect.height;
+        player.velocity.y = 0;
+        player.onGround = true;
+    }
+
+    // actualizar enemigos
+    for (auto& e : enemies) e.update(dt);
+
+    // actualizar cronómetro
+    elapsedTime += dt;
+}
+
+void Game::collision() {
+    if (state != PLAYING) return;
+
+    // colisión jugador-enemigo -> LOST
+    for (const auto& e : enemies) {
+        if (CheckCollisionRecs(player.rect, e.rect)) {
+            state = LOST;
+            loseTimer = 0.0f;
+            return;
+        }
+    }
+
+    // colisión goal -> WON
+    if (CheckCollisionRecs(player.rect, goal)) {
+        state = WON;
+    }
+}
+
+// ---------------------- dibujo (sin cambios de lógica) ----------------------
 void Game::draw() const {
     BeginDrawing();
     ClearBackground(RAYWHITE);
@@ -225,6 +271,7 @@ void Game::draw() const {
     else {
         ClearBackground(kBackgroundColor);
 
+        // cronómetro arriba al centro
         {
             int mins = (int)elapsedTime / 60;
             int secs = (int)elapsedTime % 60;
@@ -234,10 +281,13 @@ void Game::draw() const {
             DrawText(timeText, screenW / 2 - tw / 2, 8, kTimerTextSize, BLACK);
         }
 
+        // coordenadas del jugador
         DrawText(TextFormat("X: %.1f  Y: %.1f", player.rect.x, player.rect.y), 10, 36, kCoordsTextSize, BLACK);
 
+        // plataformas
         for (const auto& p : platforms) p.draw();
 
+        // goal
         if (goalTex.id != 0) {
             Rectangle src = { 0.0f, 0.0f, (float)goalTex.width, (float)goalTex.height };
             Rectangle dest = { goal.x, goal.y, goal.width, goal.height };
@@ -249,8 +299,10 @@ void Game::draw() const {
             DrawRectangleLinesEx(goal, 2.0f, BLACK);
         }
 
+        // enemigos
         for (const auto& e : enemies) e.draw();
 
+        // jugador
         player.draw();
 
         DrawText("Izq/Dcha - Mover | Espacio - Saltar | ESC - Volver menu", 10, 60, kHintTextSize, BLACK);
@@ -288,6 +340,7 @@ void Game::draw() const {
     EndDrawing();
 }
 
+// ---------------------- loop principal ----------------------
 void Game::run() {
     initWindowAndTextures();
 
@@ -296,24 +349,16 @@ void Game::run() {
     while (!WindowShouldClose() && state != EXITING) {
         float dt = GetFrameTime();
 
-        if (state == MENU) {
-            if (IsKeyPressed(KEY_DOWN)) menuSelection = (menuSelection + 1) % 2;
-            if (IsKeyPressed(KEY_UP)) menuSelection = (menuSelection + 2 - 1) % 2;
-            mousePoint = GetMousePosition();
-            for (int i = 0; i < 2; ++i) if (CheckCollisionPointRec(mousePoint, menuOptionBoxes[i])) menuSelection = i;
+        // entrada separada
+        input(dt);
 
-            if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                if (menuSelection == 0) {
-                    reset();
-                    state = PLAYING;
-                }
-                else {
-                    state = EXITING;
-                }
-            }
-        }
+        // física (solo si estamos en PLAYING)
+        physics(dt);
 
-        update(dt);
+        // comprobaciones de colisión / estado
+        collision();
+
+        // render
         draw();
     }
 

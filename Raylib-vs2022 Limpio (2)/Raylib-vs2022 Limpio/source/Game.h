@@ -42,11 +42,21 @@ private:
     std::string playerAltPath;
     std::string goalPath;
 
+    // inicialización / limpieza
     void initWindowAndTextures();
     void unloadTexturesAndClose();
     void reset();
-    void update(float dt);
+
+    // separación de responsabilidades
+    void input(float dt);       // manejar entrada / cambios de estado
+    void physics(float dt);     // aplicar gravedad y mover (resolución de colisiones por plataforma)
+    void collision();           // checks: jugador-enemigo, jugador-goal, etc.
+
+    // render
     void draw() const;
+
+    // entrada/estado del menú: lo dejamos aquí pero input() lo usará
+    void handleMenuInput();
 };
 
 #endif // GAME_H
